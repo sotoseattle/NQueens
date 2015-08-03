@@ -32,7 +32,7 @@ class Tablero
     row(r) + col(c)
   end
 
-  def diag_equal_grow(i, j)
+  def equal_grow(i, j)
     kk = []
     while i<=@n && j<=@n do
       kk << "#{i}-#{j}"
@@ -42,7 +42,7 @@ class Tablero
     kk
   end
 
-  def diag_oppos_grow(i, j)
+  def oppos_grow(i, j)
     kk = []
     while i<=@n && j>=1 do
       kk << "#{i}-#{j}"
@@ -52,7 +52,7 @@ class Tablero
     kk
   end
 
-  def bishopy(r, c)
+  def diag_equal_grow(r, c)
     if r < c
       i = 1
       j = (r - c).abs + 1
@@ -60,8 +60,10 @@ class Tablero
       i = (r - c).abs + 1
       j = 1
     end
-    arr = diag_equal_grow(i, j)
+    equal_grow(i, j)
+  end
 
+  def diag_oppos_grow(r, c)
     if r + c <= @n + 1
       i = 1
       j = (r + c - 1)
@@ -69,8 +71,11 @@ class Tablero
       j = @n
       i = r + c - j
     end
-    arr += diag_oppos_grow(i, j)
+    oppos_grow(i, j)
+  end
 
+  def bishopy(r, c)
+    arr = diag_equal_grow(r, c) + diag_oppos_grow(r, c)
     arr.map{|e| sqr(e)}.flatten
   end
 
