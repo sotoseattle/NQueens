@@ -7,7 +7,7 @@ class Cell < RandomVar
 end
 
 class Tablero
-  attr_accessor :board
+  attr_accessor :board, :n
 
   def initialize(n)
     @n = n
@@ -29,7 +29,7 @@ class Tablero
 
   def tower_cells(cname)
     r, c = cname.split('-').map(&:to_i)
-    row(r) + col(c)
+    (row(r) + col(c)).uniq
   end
 
   def equal_grow(i, j)
@@ -53,7 +53,7 @@ class Tablero
   end
 
   def diag_equal_grow(r, c)
-    if r < c
+    if r <= c
       i = 1
       j = (r - c).abs + 1
     else
@@ -76,7 +76,7 @@ class Tablero
 
   def bishopy(r, c)
     arr = diag_equal_grow(r, c) + diag_oppos_grow(r, c)
-    arr.map{|e| sqr(e)}.flatten
+    arr.map{|e| sqr(e)}.flatten.uniq
   end
 
   def bishop_cells(cname)
