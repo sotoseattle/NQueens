@@ -1,34 +1,37 @@
 require 'primo'
 require './tablero'
 
+class Cell < RandomVar
+  def initialize(r, c)
+    super(card: 2, name: "#{r}-#{c}", ass: %w(X O))
+  end
+end
+
 class Queeny
-  attr_accessor :tb, :fs, :ct
+  attr_accessor :tb, :ct
 
   def initialize(n)
     @tb = Tablero.new(n)
-    @fs = fucktorize
-    @ct = CliqueTree.new(*fs)
+    @ct = CliqueTree.new(*fucktorize)
   end
 
   def fucktorize
-    fis = []
-    @tb.board.each do |x|
+    arr = []
+    @tb.cells.each do |x|
       @tb.queen_cells(x.name).each do |y|
         if x!=y
-          fis << Factor.new(vars: [y, x], vals: [0.0, 1.0, 1.0, 1.0])
+          arr << Factor.new(vars: [y, x], vals: [0.0, 1.0, 1.0, 1.0])
         end
       end
     end
-    fis
+    arr
   end
 
   def resolve
     ct.calibrate
-    # @tb.board.each { |e| puts "#{e}: #{ct.query(e, 'X')}" }
-    # puts "_"*40
 
     probs = {}
-    tb.board.each { |e| probs[e] = ct.query(e, 'X') }
+    tb.cells.each { |e| probs[e] = ct.query(e, 'X') }
     anti_probs = probs.invert
     anti_probs.delete(1.0)
     pick = anti_probs.keys.max
@@ -36,7 +39,7 @@ class Queeny
     if pick != 0.0
       cell = anti_probs[pick]
       f = ct.nodes.find { |n| n.vars.include?(cell) }
-      f.bag[:phi] * Factor.new(vars: [cell], vals: [1.0, 0.0])
+      ct.observation(f, cell, [1.0, 0.0])
       resolve
     else
       puts probs.values.join.gsub('1.0', 'X').gsub('0.0', '_').scan(/.{#{tb.n}}/).join("\n")
@@ -44,10 +47,16 @@ class Queeny
   end
 end
 
-q = Queeny.new(5)
-# p q.fs.size
-q.resolve
-# p q.ct.nodes.size
+class CliqueTree # monkey patching Clique Tree to reduce with Identity function
+  def observation(factotum, cell, valores)
+    factotum.bag[:phi] * Factor.new(vars: [cell], vals: valores)
+  end
+end
+
+start = Time.now
+  q = Queeny.new(4)
+  q.resolve
+puts "Time: #{Time.now - start}"
 
 # Basic factor. Given x and y, cells reacheable by queen:
 #     x  y   p

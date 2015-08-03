@@ -1,30 +1,25 @@
 require 'primo'
 
-class Cell < RandomVar
-  def initialize(r, c)
-    super(card: 2, name: "#{r}-#{c}", ass: %w(X O))
-  end
-end
 
 class Tablero
-  attr_accessor :board, :n
+  attr_accessor :cells, :n
 
   def initialize(n)
     @n = n
-    @board = []
-    (1..n).each { |r| (1..n).each { |c| @board << Cell.new(r, c) } }
+    @cells = []
+    (1..n).each { |r| (1..n).each { |c| @cells << Cell.new(r, c) } }
   end
 
   def row(r)
-    @board.select {|e| e.name=~/^#{r}-/ }
+    @cells.select {|e| e.name=~/^#{r}-/ }
   end
 
   def col(c)
-    @board.select {|e| e.name=~/-#{c}$/ }
+    @cells.select {|e| e.name=~/-#{c}$/ }
   end
 
   def sqr(cname)
-    @board.select {|e| e.name == cname }
+    @cells.select {|e| e.name == cname }
   end
 
   def tower_cells(cname)
