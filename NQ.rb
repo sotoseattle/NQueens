@@ -2,9 +2,10 @@ require 'primo'
 require './tablero'
 
 class NQueens
-  attr_accessor :t, :factors
+  attr_accessor :n, :t, :factors
 
   def initialize(n)
+    @n = n
     @t = Tablero.new(n)
     @factors = []
     fucktorize_idle_cells(t.board)
@@ -12,9 +13,17 @@ class NQueens
 
   def fucktorize_idle_cells(rest)
     vars = t.queen_cells(rest.first.name)
-    @factors << values(vars)
+    @factors << fucktor(vars)
     rest -= vars
     fucktorize_idle_cells(rest) unless rest.empty?
+  end
+
+  def fucktor(vars)
+    vars = vars.rotate
+    n = vars.size - 1
+    vals = nesting_loops(n).map(&:flatten)
+                           .map {|e| e.reduce(:+) > 1 ? 0.0 : 1.0}
+    Factor.new( vars: vars, vals: vals)
   end
 
   def nesting_loops(n)
@@ -23,14 +32,6 @@ class NQueens
     else
       [1, 0].product(nesting_loops(n-1))
     end
-  end
-
-  def values(vars)
-    vars = vars.rotate
-    n = vars.size - 1
-    vals = nesting_loops(n).map(&:flatten)
-                           .map {|e| e.reduce(:+) > 1 ? 0.0 : 1.0}
-    Factor.new( vars: vars, vals: vals)
   end
 
   def resolve
@@ -44,23 +45,22 @@ class NQueens
 
     pick = anti_probs.keys.max
 
-    p pick
+    puts "p(x) chosen: #{pick}"
     probs.each{|k, v| puts "#{k.name}: #{v}"}
     puts "-------------------"
 
     if pick != 0.0
       cell = anti_probs[pick]
-      # f = factors.detect{|g| g.vars.include?(cell)}
-      f = values(t.queen_cells(cell.name))
+      f = fucktor(t.queen_cells(cell.name))
       f.reduce(cell => 'X')
       factors << f
       resolve
     else
-      # probs.each{|k, v| puts "#{k.name}: #{v}"}
+      puts probs.values.join.gsub('1.0', 'X').gsub('0.0', '_').scan(/.{#{n}}/).join("\n")
     end
   end
 end
 
-s = NQueens.new(3)
+s = NQueens.new(4)
 s.resolve
 
