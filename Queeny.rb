@@ -27,36 +27,43 @@ class Queeny
     arr
   end
 
+  def highest_probability_cell
+    atlas = {}
+    tb.cells.each_with_index { |x, i| atlas[ct.query(x, 'X')] = i }
+    pick = (atlas.keys - [1.0]).max
+    if pick != 0.0
+      tb.cells[atlas[pick]]
+    else
+      nil
+    end
+  end
+
   def resolve
     ct.calibrate
-
-    probs = {}
-    tb.cells.each { |e| probs[e] = ct.query(e, 'X') }
-    anti_probs = probs.invert
-    anti_probs.delete(1.0)
-    pick = anti_probs.keys.max
-
-    if pick != 0.0
-      cell = anti_probs[pick]
+    if cell = highest_probability_cell
       f = ct.nodes.find { |n| n.vars.include?(cell) }
       ct.observation(f, cell, [1.0, 0.0])
       resolve
     else
-      puts probs.values.join.gsub('1.0', 'X').gsub('0.0', '_').scan(/.{#{tb.n}}/).join("\n")
+      print_solution
     end
+  end
+
+  def print_solution
+      puts tb.cells.map { |x| ct.query(x, 'X') }
+             .join.gsub('1.0', 'X').gsub('0.0', '_')
+             .scan(/.{#{tb.n}}/).join("\n")
   end
 end
 
-class CliqueTree # monkey patching Clique Tree to reduce with Identity function
+class CliqueTree # monkey patch => reduce with Identity factor
   def observation(factotum, cell, valores)
     factotum.bag[:phi] * Factor.new(vars: [cell], vals: valores)
   end
 end
 
-start = Time.now
-  q = Queeny.new(4)
-  q.resolve
-puts "Time: #{Time.now - start}"
+q = Queeny.new(4)
+q.resolve
 
 # Basic factor. Given x and y, cells reacheable by queen:
 #     x  y   p
